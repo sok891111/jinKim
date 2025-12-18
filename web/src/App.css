@@ -284,7 +284,8 @@
     transform 120ms ease,
     box-shadow 120ms ease,
     border-color 120ms ease;
-  touch-action: manipulation;
+  /* Critical for iOS Safari: prevent scroll from stealing drag gesture */
+  touch-action: none;
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;

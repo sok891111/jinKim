@@ -3,7 +3,6 @@ import {
   DndContext,
   DragOverlay,
   MouseSensor,
-  PointerSensor,
   TouchSensor,
   closestCenter,
   useDroppable,
@@ -88,14 +87,14 @@ function QuestionSession({
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
   const sensors = useSensors(
-    // Mobile-first: prefer long-press to start drag, so scrolling feels natural.
+    // Mobile-first: use TouchSensor with long-press, and avoid PointerSensor on mobile
+    // (Pointer-based scrolling can steal the gesture and prevent dragging).
     useSensor(TouchSensor, {
-      activationConstraint: { delay: 180, tolerance: 8 },
+      activationConstraint: { delay: 140, tolerance: 6 },
     }),
     useSensor(MouseSensor, {
       activationConstraint: { distance: 6 },
     }),
-    useSensor(PointerSensor),
   )
 
   const bankItems = containers[BANK_ID].map((id) => itemById[id]).filter(Boolean)
