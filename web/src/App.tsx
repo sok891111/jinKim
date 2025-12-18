@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -10,6 +10,7 @@ import {
   useSensors,
 } from '@dnd-kit/core'
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core'
+import { snapCenterToCursor } from '@dnd-kit/modifiers'
 import './App.css'
 import { QUESTIONS, type Question } from './data/questions'
 import { WordCard } from './components/WordCard'
@@ -85,6 +86,7 @@ function QuestionSession({
   const [grade, setGrade] = useState<Grade | null>(null)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const scrollLockY = useRef<number | null>(null)
 
   const sensors = useSensors(
     // Mobile-first: use TouchSensor with long-press, and avoid PointerSensor on mobile
@@ -96,6 +98,36 @@ function QuestionSession({
       activationConstraint: { distance: 6 },
     }),
   )
+
+  // iOS Safari: prevent scroll/viewport shift during drag start (causes overlay offset).
+  useEffect(() => {
+    if (!activeId) {
+      if (scrollLockY.current !== null) {
+        const y = scrollLockY.current
+        scrollLockY.current = null
+        document.body.style.position = ''
+        document.body.style.top = ''
+        document.body.style.left = ''
+        document.body.style.right = ''
+        document.body.style.width = ''
+        document.body.style.overflow = ''
+        document.documentElement.style.overscrollBehavior = ''
+        window.scrollTo(0, y)
+      }
+      return
+    }
+
+    if (scrollLockY.current !== null) return
+    const y = window.scrollY
+    scrollLockY.current = y
+    document.documentElement.style.overscrollBehavior = 'none'
+    document.body.style.position = 'fixed'
+    document.body.style.top = `-${y}px`
+    document.body.style.left = '0'
+    document.body.style.right = '0'
+    document.body.style.width = '100%'
+    document.body.style.overflow = 'hidden'
+  }, [activeId])
 
   const bankItems = containers[BANK_ID].map((id) => itemById[id]).filter(Boolean)
 
@@ -234,6 +266,7 @@ function QuestionSession({
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
+            modifiers={[snapCenterToCursor]}
             onDragStart={onDragStart}
             onDragEnd={onDragEnd}
           >
@@ -318,7 +351,7 @@ function QuestionSession({
               </div>
             </div>
 
-            <DragOverlay>
+            <DragOverlay modifiers={[snapCenterToCursor]}>
               {activeId && itemById[activeId] ? (
                 <div className="wordCard overlay">{itemById[activeId].text}</div>
               ) : null}
