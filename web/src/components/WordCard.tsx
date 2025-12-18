@@ -10,7 +10,10 @@ export function WordCard({ id, text, disabled }: { id: string; text: string; dis
 
   const style: CSSProperties = {
     transform: CSS.Translate.toString(transform),
-    opacity: isDragging ? 0.6 : 1,
+    // When using DragOverlay, hide the original element while dragging
+    // so users don't see a duplicated “two cards” effect.
+    opacity: isDragging ? 0 : 1,
+    visibility: isDragging ? 'hidden' : 'visible',
     cursor: disabled ? 'not-allowed' : 'grab',
   }
 
