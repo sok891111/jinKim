@@ -18,6 +18,11 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  /* Mobile drag UX: prevent iOS long-press text selection / callout */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 * {

@@ -205,14 +205,12 @@ function QuestionSession({
           <div className="brandMark">EN</div>
           <div>
             <div className="brandTitle">Sentence Completion</div>
-            <div className="brandSub">Drag & drop word cards to complete the sentence</div>
+            <div className="brandSub">단어 카드를 넣어 문장을 완성해요</div>
           </div>
         </div>
         <div className="meta">
           <div className="pill">{question.level ?? 'Practice'}</div>
-          <div className="pill">
-            {idx + 1} / {total}
-          </div>
+          <div className="pill">{idx + 1}/{total}</div>
         </div>
       </header>
 
@@ -221,7 +219,7 @@ function QuestionSession({
           <div className="panelHeader">
             <div>
               <div className="panelTitle">{question.title}</div>
-              <div className="panelHint">모바일: 단어 탭 → 빈칸 탭 (또는 롱프레스 후 드래그)</div>
+              <div className="panelHint">단어 탭 → 빈칸 탭 · 또는 단어를 꾹 눌러 드래그</div>
             </div>
             <div className="score">
               {submitted && scoreText ? (
