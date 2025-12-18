@@ -1,14 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   DndContext,
-  DragEndEvent,
   DragOverlay,
-  DragStartEvent,
   PointerSensor,
   closestCenter,
   useSensor,
   useSensors,
 } from '@dnd-kit/core'
+import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core'
 import './App.css'
 import { QUESTIONS, type Question } from './data/questions'
 import { WordCard } from './components/WordCard'
@@ -47,10 +46,17 @@ function findContainer(containers: Containers, id: string): string | null {
   return null
 }
 
-function App() {
-  const [idx, setIdx] = useState(0)
-  const question = QUESTIONS[idx]
-
+function QuestionSession({
+  question,
+  idx,
+  total,
+  onNext,
+}: {
+  question: Question
+  idx: number
+  total: number
+  onNext: () => void
+}) {
   const blanks = useMemo(() => {
     return question.tokens.filter((t) => t.type === 'blank') as Extract<
       Question['tokens'][number],
@@ -74,14 +80,6 @@ function App() {
   const [grade, setGrade] = useState<Grade | null>(null)
   const [activeId, setActiveId] = useState<string | null>(null)
 
-  useEffect(() => {
-    // when the question changes, reset everything deterministically
-    setContainers(initialContainers)
-    setSubmitted(false)
-    setGrade(null)
-    setActiveId(null)
-  }, [initialContainers])
-
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 6 },
@@ -95,10 +93,6 @@ function App() {
     setSubmitted(false)
     setGrade(null)
     setActiveId(null)
-  }
-
-  function next() {
-    setIdx((v) => (v + 1) % QUESTIONS.length)
   }
 
   function onDragStart(e: DragStartEvent) {
@@ -185,7 +179,7 @@ function App() {
         <div className="meta">
           <div className="pill">{question.level ?? 'Practice'}</div>
           <div className="pill">
-            {idx + 1} / {QUESTIONS.length}
+            {idx + 1} / {total}
           </div>
         </div>
       </header>
@@ -280,7 +274,7 @@ function App() {
             >
               Submit & Grade
             </button>
-            <button className="btn" type="button" onClick={next}>
+            <button className="btn" type="button" onClick={onNext}>
               Next
             </button>
           </div>
@@ -321,6 +315,21 @@ function App() {
 
       <footer className="footer">MVP • local-only (no account) • ready to extend to backend later</footer>
     </div>
+  )
+}
+
+function App() {
+  const [idx, setIdx] = useState(0)
+  const question = QUESTIONS[idx]
+
+  return (
+    <QuestionSession
+      key={question.id}
+      question={question}
+      idx={idx}
+      total={QUESTIONS.length}
+      onNext={() => setIdx((v) => (v + 1) % QUESTIONS.length)}
+    />
   )
 }
 
