@@ -234,6 +234,7 @@ function QuestionSession({
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
+            autoScroll={false}
             onDragStart={onDragStart}
             onDragEnd={onDragEnd}
           >
@@ -295,12 +296,6 @@ function QuestionSession({
 
             <div className="wordBankTitle">Word bank</div>
             <div className="wordBank" aria-label="word bank">
-              <div className="bankDropZone">
-                <div className="bankDropZoneLabel">Drop here to return</div>
-                <DroppableSlot id={BANK_ID} label="word bank drop zone">
-                  <span className="slotPlaceholder">Drop words here</span>
-                </DroppableSlot>
-              </div>
               <div className="bankCards">
                 {bankItems.length === 0 ? (
                   <div className="emptyBank">All words placed. (You can drag words back.)</div>

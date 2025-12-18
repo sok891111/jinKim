@@ -240,24 +240,6 @@
   }
 }
 
-.bankDropZone {
-  border-radius: 14px;
-  border: 1px solid rgba(15, 23, 42, 0.1);
-  background: rgba(248, 250, 252, 0.9);
-  padding: 12px;
-}
-
-.bankDropZone .droppableSlot {
-  width: 100%;
-  min-height: 56px;
-}
-
-.bankDropZoneLabel {
-  font-size: 12px;
-  color: rgba(15, 23, 42, 0.6);
-  margin-bottom: 8px;
-}
-
 .bankCards {
   display: flex;
   flex-wrap: wrap;
