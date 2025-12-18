@@ -2,8 +2,11 @@ import { useMemo, useState } from 'react'
 import {
   DndContext,
   DragOverlay,
+  MouseSensor,
   PointerSensor,
+  TouchSensor,
   closestCenter,
+  useDroppable,
   useSensor,
   useSensors,
 } from '@dnd-kit/core'
@@ -14,6 +17,7 @@ import { WordCard } from './components/WordCard'
 import { DroppableSlot } from './components/DroppableSlot'
 
 const BANK_ID = 'bank'
+const SENTENCE_ID = 'sentence-area'
 const blankContainerId = (blankId: string) => `blank:${blankId}`
 
 type Item = {
@@ -57,6 +61,8 @@ function QuestionSession({
   total: number
   onNext: () => void
 }) {
+  const { setNodeRef: setSentenceRef, isOver: isOverSentence } = useDroppable({ id: SENTENCE_ID })
+
   const blanks = useMemo(() => {
     return question.tokens.filter((t) => t.type === 'blank') as Extract<
       Question['tokens'][number],
@@ -79,40 +85,27 @@ function QuestionSession({
   const [submitted, setSubmitted] = useState(false)
   const [grade, setGrade] = useState<Grade | null>(null)
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
+    // Mobile-first: prefer long-press to start drag, so scrolling feels natural.
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 180, tolerance: 8 },
+    }),
+    useSensor(MouseSensor, {
       activationConstraint: { distance: 6 },
     }),
+    useSensor(PointerSensor),
   )
 
   const bankItems = containers[BANK_ID].map((id) => itemById[id]).filter(Boolean)
 
-  function reset() {
-    setContainers(initialContainers)
-    setSubmitted(false)
-    setGrade(null)
-    setActiveId(null)
-  }
-
-  function onDragStart(e: DragStartEvent) {
-    setActiveId(String(e.active.id))
-  }
-
-  function onDragEnd(e: DragEndEvent) {
-    setActiveId(null)
-
-    const active = String(e.active.id)
-    const over = e.over?.id ? String(e.over.id) : null
-    if (!over) return
-
-    const from = findContainer(containers, active)
-    const to = findContainer(containers, over)
-    if (!from || !to) return
-
-    if (from === to) return
-
+  function moveItem(active: string, to: string) {
     setContainers((prev) => {
+      const from = findContainer(prev, active)
+      if (!from) return prev
+      if (from === to) return prev
+
       const nextState: Containers = { ...prev }
       const fromItems = [...nextState[from]]
       const toItems = [...nextState[to]]
@@ -124,7 +117,6 @@ function QuestionSession({
 
       const isTargetBlank = to.startsWith('blank:')
       if (isTargetBlank) {
-        // blanks can hold only one item. If occupied, swap.
         const existing = toItems[0]
         toItems.length = 0
         toItems.push(active)
@@ -137,6 +129,46 @@ function QuestionSession({
       nextState[to] = toItems
       return nextState
     })
+  }
+
+  function removeFromBlank(active: string) {
+    moveItem(active, BANK_ID)
+  }
+
+  function reset() {
+    setContainers(initialContainers)
+    setSubmitted(false)
+    setGrade(null)
+    setActiveId(null)
+    setSelectedId(null)
+  }
+
+  function onDragStart(e: DragStartEvent) {
+    setActiveId(String(e.active.id))
+  }
+
+  function onDragEnd(e: DragEndEvent) {
+    setActiveId(null)
+
+    const active = String(e.active.id)
+    const over = e.over?.id ? String(e.over.id) : null
+
+    // If user drops on sentence area but not on a blank, do nothing (snap back).
+    if (over === SENTENCE_ID) return
+
+    // If dropped outside sentence area (no droppable), treat as "remove/return to bank".
+    if (!over) {
+      removeFromBlank(active)
+      return
+    }
+
+    const to = findContainer(containers, over)
+    if (!to) {
+      removeFromBlank(active)
+      return
+    }
+
+    moveItem(active, to)
 
     // once user changes, clear previous submit result
     if (submitted) {
@@ -189,7 +221,7 @@ function QuestionSession({
           <div className="panelHeader">
             <div>
               <div className="panelTitle">{question.title}</div>
-              <div className="panelHint">빈칸에 알맞은 단어를 끌어다 놓으세요.</div>
+              <div className="panelHint">모바일: 단어 탭 → 빈칸 탭 (또는 롱프레스 후 드래그)</div>
             </div>
             <div className="score">
               {submitted && scoreText ? (
@@ -208,7 +240,11 @@ function QuestionSession({
             onDragStart={onDragStart}
             onDragEnd={onDragEnd}
           >
-            <div className="sentence" aria-label="sentence">
+            <div
+              ref={setSentenceRef}
+              className={['sentence', isOverSentence ? 'isOverSentence' : ''].filter(Boolean).join(' ')}
+              aria-label="sentence"
+            >
               {question.tokens.map((t, i) => {
                 if (t.type === 'text') return <span key={`t-${i}`}>{t.value}</span>
 
@@ -229,7 +265,30 @@ function QuestionSession({
                       label={`blank ${t.blankId}`}
                       state={state}
                     >
-                      {placedItem ? <WordCard id={placedItem.id} text={placedItem.text} /> : undefined}
+                      {placedItem ? (
+                        <WordCard
+                          id={placedItem.id}
+                          text={placedItem.text}
+                          onClick={() => removeFromBlank(placedItem.id)}
+                        />
+                      ) : (
+                        <button
+                          type="button"
+                          className={['blankTap', selectedId ? 'isReady' : ''].filter(Boolean).join(' ')}
+                          onClick={() => {
+                            if (!selectedId) return
+                            moveItem(selectedId, containerId)
+                            setSelectedId(null)
+                            if (submitted) {
+                              setSubmitted(false)
+                              setGrade(null)
+                            }
+                          }}
+                          aria-label="tap to fill blank"
+                        >
+                          Tap to fill
+                        </button>
+                      )}
                     </DroppableSlot>
                     {t.hint ? <span className="blankHint">{t.hint}</span> : null}
                   </span>
@@ -249,7 +308,15 @@ function QuestionSession({
                 {bankItems.length === 0 ? (
                   <div className="emptyBank">All words placed. (You can drag words back.)</div>
                 ) : (
-                  bankItems.map((it) => <WordCard key={it.id} id={it.id} text={it.text} />)
+                  bankItems.map((it) => (
+                    <WordCard
+                      key={it.id}
+                      id={it.id}
+                      text={it.text}
+                      isSelected={selectedId === it.id}
+                      onClick={() => setSelectedId((prev) => (prev === it.id ? null : it.id))}
+                    />
+                  ))
                 )}
               </div>
             </div>

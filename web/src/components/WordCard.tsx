@@ -2,7 +2,19 @@ import type { CSSProperties } from 'react'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 
-export function WordCard({ id, text, disabled }: { id: string; text: string; disabled?: boolean }) {
+export function WordCard({
+  id,
+  text,
+  disabled,
+  onClick,
+  isSelected,
+}: {
+  id: string
+  text: string
+  disabled?: boolean
+  onClick?: () => void
+  isSelected?: boolean
+}) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id,
     disabled,
@@ -20,9 +32,10 @@ export function WordCard({ id, text, disabled }: { id: string; text: string; dis
   return (
     <button
       ref={setNodeRef}
-      className="wordCard"
+      className={['wordCard', isSelected ? 'isSelected' : ''].filter(Boolean).join(' ')}
       style={style}
       type="button"
+      onClick={onClick}
       {...listeners}
       {...attributes}
       aria-disabled={disabled}

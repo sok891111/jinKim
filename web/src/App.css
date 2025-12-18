@@ -2,8 +2,11 @@
 
 .page {
   min-height: 100vh;
-  padding: 24px;
+  padding: 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
   color: #0b1220;
+  max-width: 560px;
+  margin: 0 auto;
 }
 
 .topBar {
@@ -16,6 +19,9 @@
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.78);
   backdrop-filter: blur(10px);
+  position: sticky;
+  top: 10px;
+  z-index: 5;
 }
 
 .brand {
@@ -64,7 +70,7 @@
 .grid {
   margin-top: 18px;
   display: grid;
-  grid-template-columns: 1.4fr 0.6fr;
+  grid-template-columns: 1fr;
   gap: 18px;
 }
 
@@ -127,6 +133,11 @@
   flex-wrap: wrap;
 }
 
+.sentence.isOverSentence {
+  border-color: rgba(59, 130, 246, 0.55);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.08);
+}
+
 .blankWrap {
   display: inline-flex;
   align-items: center;
@@ -148,7 +159,7 @@
   align-items: center;
   justify-content: center;
   min-width: 108px;
-  padding: 8px 10px;
+  padding: 10px 10px;
   border-radius: 12px;
   border: 2px solid rgba(15, 23, 42, 0.18);
   background: rgba(255, 255, 255, 0.92);
@@ -182,6 +193,22 @@
   font-weight: 800;
 }
 
+.blankTap {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: rgba(15, 23, 42, 0.45);
+  font-weight: 800;
+  font-size: 12px;
+  padding: 6px 8px;
+  border-radius: 10px;
+}
+
+.blankTap.isReady {
+  color: rgba(59, 130, 246, 0.95);
+  background: rgba(59, 130, 246, 0.08);
+}
+
 /* Word bank */
 
 .wordBankTitle {
@@ -194,7 +221,7 @@
 .wordBank {
   margin-top: 10px;
   display: grid;
-  grid-template-columns: 220px 1fr;
+  grid-template-columns: 1fr;
   gap: 14px;
 }
 
@@ -238,16 +265,17 @@
   appearance: none;
   border: 1px solid rgba(15, 23, 42, 0.15);
   background: white;
-  padding: 10px 12px;
+  padding: 12px 14px;
   border-radius: 999px;
   font-weight: 800;
-  font-size: 14px;
+  font-size: 15px;
   color: rgba(15, 23, 42, 0.9);
   box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
   transition:
     transform 120ms ease,
     box-shadow 120ms ease,
     border-color 120ms ease;
+  touch-action: manipulation;
 }
 
 .wordCard:hover {
@@ -262,6 +290,11 @@
 .wordCard.overlay {
   cursor: grabbing;
   border-color: rgba(59, 130, 246, 0.45);
+}
+
+.wordCard.isSelected {
+  border-color: rgba(59, 130, 246, 0.65);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
 }
 
 /* Actions / feedback */
@@ -315,9 +348,7 @@
 /* Side */
 
 .side {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  display: none; /* mobile-only UI: hide side panels */
 }
 
 .sidePanel {
